@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: hello
-        image: ghcr.io/shavershian96/hello:PLACEHOLDER
+        image: ghcr.io/shavershian96/hello:29a3510
         ports:
         - containerPort: 80
         readinessProbe:
