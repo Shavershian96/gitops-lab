@@ -1,0 +1,38 @@
+name: hello-ci
+
+on:                                  # QUANDO a pipeline roda
+  push:
+    branches: [main]
+    paths:
+      - 'src/hello/**'               # só quando o código da aplicação muda
+      - '.github/workflows/hello.yaml'
+
+permissions:                         # o que a pipeline pode fazer
+  contents: write                    # gravar commits no repositório
+  packages: write                    # publicar imagens no registry
+
+jobs:
+  build:
+    runs-on: ubuntu-latest           # roda numa máquina Ubuntu do GitHub
+    steps:
+      - name: Código baixar
+        uses: actions/checkout@v4
+
+      - name: Login no registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Imagem construir e publicar
+        run: |
+          IMAGE=ghcr.io/shavershian96/hello:${GITHUB_SHA::7}
+          docker build -t $IMAGE src/hello
+          docker push $IMAGE
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+
+      - name: Manifest GitOps atualizar
+        run: |
+          sed -i "s|image: ghcr.io/shavershian96/hello:.*|image: $IMAGE|" apps/hello/deployment.yaml
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add apps/hello/deployment.yaml
+          git commit -m "hello: Image auf ${GITHUB_SHA::7} aktualisieren"
+          git push
