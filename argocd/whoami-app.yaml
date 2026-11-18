@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: whoami
+  namespace: argocd
+spec:
+  project: default
+  source:                          # DE ONDE: o Git
+    repoURL: https://github.com/Shavershian96/gitops-lab.git
+    targetRevision: main           # qual branch
+    path: apps/whoami              # qual pasta
+  destination:                     # PARA ONDE: o cluster
+    server: https://kubernetes.default.svc   # este mesmo cluster
+    namespace: gitops-demo
+  syncPolicy:
+    automated:                     # sincroniza sozinho, sem ninguém clicar
+      prune: true                  # apaga do cluster o que foi apagado do Git
+      selfHeal: true               # desfaz alterações feitas à mão no cluster
+    syncOptions:
+    - CreateNamespace=true         # cria o namespace, se não existir
